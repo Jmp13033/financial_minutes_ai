@@ -6,10 +6,19 @@ from langchain.document_loaders.pdf import PyPDFDirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain.schema.document import Document
 from get_embedding_function import get_embedding_function
-from langchain.vectorstores.chroma import Chroma
+from langchain_community.vectorstores import Chroma
+import nltk
+from nltk.corpus import stopwords
+nltk.download('stopwords')
 
 CHROMA_PATH = "chroma"
 DATA_PATH = "data"
+
+def remove_stopwords(text):
+    stop_words = set(stopwords.words('english'))
+    filtered_text = ' '.join([word for word in text.split() if word.lower() not in stop_words])
+    return filtered_text
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -26,8 +35,6 @@ def main():
 
 
 
-
-
 # loads in the pdf 
 def load_documents():
     document_loader = PyPDFDirectoryLoader(DATA_PATH)
@@ -37,13 +44,11 @@ def load_documents():
 def split_documents(documents: list[Document]):
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=100,
-        chunk_overlap=50,
+        chunk_overlap=10,
         length_function=len,
         is_separator_regex=False,
     )
     return text_splitter.split_documents(documents)
-
-
 
 ## load database
 def add_to_chroma(chunks: list[Document]):
@@ -97,6 +102,8 @@ def calculate_chunk_ids(chunks):
         chunk.metadata["id"] = chunk_id
 
     return chunks
+
+
 
 
 def clear_database():
